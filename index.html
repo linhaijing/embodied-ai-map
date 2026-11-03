@@ -72,6 +72,43 @@
   .step p{margin:0;color:var(--sub);font-size:12.5px;}
   .step .go{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;}
   .step .go a{font-size:11.5px;color:var(--accent);text-decoration:none;background:var(--tag);padding:2px 8px;border-radius:6px;border:1px solid var(--line);cursor:pointer;}
+  /* 每日学习清单 */
+  .wkbar{display:flex;align-items:center;gap:10px;margin:14px 0 8px;}
+  .wkbar h3{margin:0;font-size:15px;color:var(--accent2);}
+  .wkbar .wkmeta{color:var(--sub);font-size:12px;}
+  .days{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;}
+  .day{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;transition:.15s;position:relative;}
+  .day.done{opacity:.55;border-color:var(--accent2);}
+  .day .top{display:flex;align-items:center;gap:8px;cursor:pointer;}
+  .day .chk{width:20px;height:20px;flex:0 0 20px;border:1.5px solid var(--line);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--accent2);}
+  .day.done .chk{background:var(--accent2);color:#06281d;border-color:var(--accent2);}
+  .day .dn{font-size:12px;color:var(--sub);font-weight:600;}
+  .day .dtag{margin-left:auto;font-size:10.5px;color:#6b7482;background:var(--tag);border-radius:999px;padding:1px 8px;}
+  .day h4{margin:7px 0 4px;font-size:14px;}
+  .day p{margin:0 0 7px;color:var(--sub);font-size:12px;line-height:1.45;}
+  .day .go{display:flex;flex-wrap:wrap;gap:5px;}
+  .day .go a{font-size:11.5px;color:var(--accent);text-decoration:none;background:var(--tag);padding:2px 8px;border-radius:6px;border:1px solid var(--line);cursor:pointer;}
+  .day .go a:hover{background:#2b3240;}
+  .prog{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:6px;}
+  .prog .bar{flex:1;height:8px;background:var(--tag);border-radius:999px;overflow:hidden;}
+  .prog .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .3s;}
+  .prog .pct{font-size:12px;color:var(--sub);white-space:nowrap;}
+  .prog button{background:var(--tag);border:1px solid var(--line);color:var(--sub);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;}
+  .prog button:hover{color:var(--txt);border-color:var(--accent);}
+  /* 练习日志 */
+  .jwrap{display:flex;flex-direction:column;gap:12px;}
+  .jrow{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .jrow .jh{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .jrow .jh input[type=date]{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:5px 9px;font-size:12.5px;}
+  .jrow .jh .jd{font-size:13px;font-weight:600;}
+  .jrow .jh .jsave{margin-left:auto;font-size:11.5px;color:var(--sub);}
+  .jrow textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--line);color:var(--txt);
+    border-radius:9px;padding:10px 12px;font-size:13px;line-height:1.55;resize:vertical;outline:none;font-family:inherit;}
+  .jrow textarea:focus{border-color:var(--accent);}
+  .jrow .jlabel{color:var(--sub);font-size:12px;margin-bottom:4px;}
+  .jtools{display:flex;gap:8px;margin-bottom:4px;}
+  .jtools button{background:var(--tag);border:1px solid var(--line);color:var(--sub);border-radius:8px;padding:6px 12px;font-size:12.5px;cursor:pointer;}
+  .jtools button:hover{color:var(--txt);border-color:var(--accent);}
   .foot{margin-top:28px;color:var(--sub);font-size:12px;border-top:1px solid var(--line);padding-top:14px;}
   .hidden{display:none !important;}
   /* 移动端顶部条 + 抽屉遮罩（桌面隐藏） */
@@ -133,9 +170,9 @@
 /* 两级结构：GROUPS[] -> subs[] -> items[]
    item: {star, name, desc, links:[[label,url], ...]} */
 const GROUPS = [
-  {id:"start", icon:"🧭", title:"开始这里", subs:[
-    {id:"path", title:"学习路线（在职·实操）", lead:"从 Agent 大脑切入、边做边学、基础按需补的 7 步路线。", special:"path"},
-    {id:"check", title:"日常巡检清单", lead:"省时版：每天/每周固定看这几个就够。", special:"check"},
+  {id:"plan", icon:"📅", title:"每日学习 / 练习日志", subs:[
+    {id:"daily", title:"每日学习清单（1h/天 · 4周）", lead:"每天 1 小时可完成：工作日偏读/看/想，周末动手跑代码。点格子可打卡，进度存在本地。", special:"daily"},
+    {id:"journal", title:"练习日志", lead:"记录每天实际学了什么、卡在哪、产出是什么。内容自动存在本地浏览器。", special:"journal"},
   ]},
 
   {id:"report", icon:"📊", title:"报告与研究", subs:[
@@ -410,6 +447,11 @@ const GROUPS = [
       {name:"CES / Hannover Messe",desc:"海外消费电子与工业展。",links:[["CES","https://www.ces.tech"]]},
     ]},
   ]},
+
+  {id:"guide", icon:"🧭", title:"路线与速查", subs:[
+    {id:"path", title:"学习路线（在职·实操）", lead:"从 Agent 大脑切入、边做边学、基础按需补的 7 步路线。", special:"path"},
+    {id:"check", title:"日常巡检清单", lead:"省时版：每天/每周固定看这几个就够。", special:"check"},
+  ]},
 ];
 
 /* ---- 运行时 ---- */
@@ -490,6 +532,118 @@ function renderSpecialCheck(){
   </ol></div>`;
 }
 
+/* ===== 每日学习清单（1h/天 · 4周） =====
+   t=今日目标, a=具体动作, o=预计产出, tag=类型, go=[[label,url]] */
+const PLAN = [
+  {wk:"第1周 · 建立“大脑→身体”的直觉", days:[
+    {t:"看一个 LLM 驱动机器人的 demo", a:"看 VoxPoser 项目页的视频与概述，理解“LLM 生成指令→机器人执行”。", o:"能用一句话说清 VoxPoser 在做什么", tag:"看/读", go:[["VoxPoser","https://voxposer.github.io"]]},
+    {t:"再看一个免训练范式", a:"看 Code as Policies，体会“让 LLM 写控制代码”的思路。", o:"记下它和 VoxPoser 的区别", tag:"看/读", go:[["Code as Policies","https://code-as-policies.github.io"]]},
+    {t:"读 SayCan 的核心思想", a:"只看项目页图 + 摘要：规划 × 可供性打分。", o:"画一张 SayCan 流程草图", tag:"读", go:[["SayCan","https://say-can.github.io"]]},
+    {t:"读 ReAct 范式", a:"理解“推理与行动交替”，这是 Agent 决策的基础。", o:"写 3 行笔记：ReAct 为什么有效", tag:"读", go:[["ReAct","https://react-lm.github.io"]]},
+    {t:"浏览 Agent/大脑子类全部条目", a:"把本站“具身 Agent / 大脑”子类的项目都点开扫一遍。", o:"挑出你最想深入的 2 个", tag:"浏览", go:[["Agent/大脑","#tech-agent"]]},
+    {t:"周末动手①：装环境", a:"装 Python + 一个仿真（ManiSkill 或 Genesis），跑通官方第一个例子。", o:"本地能跑起一个仿真场景", tag:"动手", go:[["ManiSkill","https://maniskill.ai"],["Genesis","https://github.com/Genesis-Embodied-AI/Genesis"]]},
+    {t:"机动/复盘日", a:"补上没完成的；或整理本周笔记到“练习日志”。", o:"本周一句话总结", tag:"复盘", go:[["练习日志","#journal"]]},
+  ]},
+  {wk:"第2周 · 让 LLM 当“大脑”跑起来", days:[
+    {t:"读懂仿真里的任务结构", a:"看你所选仿真的一个操作任务（抓取/摆放）是怎么定义的。", o:"能说出 observation / action 是什么", tag:"读", go:[["ManiSkill 文档","https://maniskill.ai"]]},
+    {t:"设计你的第一个 prompt", a:"把“抓起红色方块”写成给 LLM 的指令模板，想清输入输出格式。", o:"一份可用的 prompt 草稿", tag:"想/写", go:[["Code as Policies","https://code-as-policies.github.io"]]},
+    {t:"接通 LLM API", a:"用任意 LLM（本地或云）跑通一次调用，拿到结构化输出。", o:"能让 LLM 返回一段动作指令", tag:"动手", go:[["LangChain","https://github.com/langchain-ai/langchain"]]},
+    {t:"把 LLM 输出接到仿真", a:"把上一步的指令解析成仿真里的动作（先硬编码映射也行）。", o:"LLM 说话→仿真里有反应", tag:"动手", go:[["ManiSkill","https://maniskill.ai"]]},
+    {t:"排错 + 读一点机器人学", a:"遇到坐标/位姿问题，按需查 CS223A 对应章节。", o:"解决 1 个卡点", tag:"按需补", go:[["CS223A","https://cs223a.stanford.edu"]]},
+    {t:"周末动手②：跑通最小闭环", a:"让“LLM 大脑 → 仿真执行 → 看结果”完整跑一次简单任务。", o:"一个能复现的最小 demo", tag:"动手", go:[["Genesis","https://github.com/Genesis-Embodied-AI/Genesis"]]},
+    {t:"机动/复盘日", a:"录一段屏或截图存档；写下还不懂的点。", o:"本周 demo + 问题清单", tag:"复盘", go:[["练习日志","#journal"]]},
+  ]},
+  {wk:"第3周 · 接 VLA 当“执行器/小脑”", days:[
+    {t:"认识 VLA 是什么", a:"读 OpenVLA 项目页：视觉-语言-动作一体模型。", o:"能解释 VLA 和“LLM大脑”的分工", tag:"读", go:[["OpenVLA","https://openvla.github.io"]]},
+    {t:"了解 LeRobot 生态", a:"看 LeRobot 仓库 README 与示例，了解它能干什么。", o:"知道从哪跑第一个策略", tag:"读", go:[["LeRobot","https://github.com/huggingface/lerobot"]]},
+    {t:"跑一个预训练策略（推理）", a:"按 LeRobot 文档跑通一次预训练模型推理。", o:"看到一个策略在仿真/数据上动", tag:"动手", go:[["LeRobot 文档","https://huggingface.co/docs/lerobot"]]},
+    {t:"理解模仿学习（按需）", a:"卡在“策略怎么学的”就补一点模仿学习概念。", o:"能说清“示范→策略”的直觉", tag:"按需补", go:[["RL/IL 速查","http://incompleteideas.net/book/the-book-2nd.html"]]},
+    {t:"设计“大脑+小脑”分工", a:"规划：LLM 决定做什么子任务，VLA 执行每个子任务。", o:"一张分工架构草图", tag:"想/写", go:[["SayCan","https://say-can.github.io"]]},
+    {t:"周末动手③：串起来", a:"让 LLM 把任务拆成步骤，逐步交给 VLA/技能执行。", o:"一个两级（规划+执行）小流程", tag:"动手", go:[["OpenVLA","https://github.com/openvla/openvla"]]},
+    {t:"机动/复盘日", a:"整理本周代码与笔记；想下周的小项目题目。", o:"3 个候选项目点子", tag:"复盘", go:[["练习日志","#journal"]]},
+  ]},
+  {wk:"第4周 · 做一个你自己的小项目", days:[
+    {t:"定题 + 拆解", a:"选一个和工作/生活相关、仿真里能做的小任务，拆成 3–5 个子步骤。", o:"一页项目计划", tag:"想/写", go:[["Agent/大脑","#tech-agent"]]},
+    {t:"搭骨架", a:"把上周的“规划+执行”代码改造成你项目的主干。", o:"能跑通空流程（占位）", tag:"动手", go:[["LeRobot","https://github.com/huggingface/lerobot"]]},
+    {t:"填逻辑①", a:"实现 LLM 规划部分：输入任务→输出子步骤。", o:"规划模块可用", tag:"动手", go:[["LangChain","https://github.com/langchain-ai/langchain"]]},
+    {t:"填逻辑②", a:"实现执行部分：每个子步骤交给技能/VLA。", o:"执行模块可用", tag:"动手", go:[["OpenVLA","https://github.com/openvla/openvla"]]},
+    {t:"联调 + 录 demo", a:"端到端跑通，录一段演示，记录失败案例。", o:"一个能展示的小项目", tag:"动手", go:[["Genesis","https://github.com/Genesis-Embodied-AI/Genesis"]]},
+    {t:"周末收口：复盘 + 下一步", a:"总结学到什么、还想深入哪；把项目放进你的作品记录。", o:"项目总结 + 进阶方向", tag:"复盘", go:[["练习日志","#journal"]]},
+    {t:"持续追踪（转入日常）", a:"切换到“日常巡检清单”，每周固定刷论文/资讯/榜单。", o:"建立长期跟踪习惯", tag:"收尾", go:[["巡检清单","#check"],["HF Papers","https://huggingface.co/papers"]]},
+  ]},
+];
+const PLAN_KEY = "eai_daily_done_v1";
+function loadDone(){ try{ return JSON.parse(localStorage.getItem(PLAN_KEY)||"{}"); }catch(e){ return {}; } }
+function saveDone(o){ try{ localStorage.setItem(PLAN_KEY, JSON.stringify(o)); }catch(e){} }
+
+function renderSpecialDaily(){
+  const done = loadDone();
+  let total=0, fin=0, idx=0;
+  const weeks = PLAN.map((w,wi)=>{
+    const days = w.days.map((d)=>{
+      idx++; total++;
+      const id = "d"+idx;
+      const isDone = !!done[id];
+      if(isDone) fin++;
+      const go = d.go.map(g=> g[1].startsWith('#')
+        ? `<a onclick="event.stopPropagation();show('${g[1].slice(1)}')">${g[0]} →</a>`
+        : `<a href="${g[1]}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${g[0]} ↗</a>`).join('');
+      return `<div class="day${isDone?' done':''}" data-id="${id}">
+        <div class="top" onclick="toggleDay('${id}')">
+          <span class="chk">${isDone?'✓':''}</span>
+          <span class="dn">Day ${idx}</span><span class="dtag">${d.tag}</span>
+        </div>
+        <h4>${d.t}</h4><p>${d.a}<br><b style="color:var(--accent2)">产出：</b>${d.o}</p>
+        <div class="go">${go}</div></div>`;
+    }).join('');
+    return `<div class="wkbar"><h3>${w.wk}</h3><span class="wkmeta">Day ${wi*7+1}–${wi*7+7}</span></div><div class="days">${days}</div>`;
+  }).join('');
+  const pct = total? Math.round(fin/total*100):0;
+  const prog = `<div class="prog"><div class="pct">进度 ${fin}/${total}</div>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="pct">${pct}%</div>
+    <button onclick="resetDaily()">清空打卡</button></div>`;
+  return `<div class="hint"><h3>📅 每日学习清单（每天约 1 小时）</h3>
+    为在职、碎片时间设计：<b>工作日偏读/看/想，周末留整块时间动手跑代码</b>；每周第 7 天是机动/复盘日。
+    点每张卡左上角方块即可<b>打卡</b>，进度自动存在本地浏览器（换设备不同步）。</div>
+    ${prog}${weeks}`;
+}
+function toggleDay(id){
+  const done = loadDone(); done[id] = !done[id]; if(!done[id]) delete done[id]; saveDone(done);
+  show('daily');
+}
+function resetDaily(){ saveDone({}); show('daily'); }
+
+/* ===== 练习日志（本地保存） ===== */
+const JRN_KEY = "eai_journal_v1";
+function loadJrn(){ try{ return JSON.parse(localStorage.getItem(JRN_KEY)||"[]"); }catch(e){ return []; } }
+function saveJrn(a){ try{ localStorage.setItem(JRN_KEY, JSON.stringify(a)); }catch(e){} }
+function renderSpecialJournal(){
+  const rows = loadJrn();
+  const today = new Date().toISOString().slice(0,10);
+  const list = rows.map((r,i)=>`
+    <div class="jrow">
+      <div class="jh"><input type="date" value="${r.date||today}" onchange="jrnEdit(${i},'date',this.value)">
+        <span class="jsave" id="jsave${i}"></span>
+        <a class="go" style="margin-left:auto" onclick="jrnDel(${i})"><span style="color:var(--sub);font-size:12px;cursor:pointer">删除</span></a></div>
+      <div class="jlabel">今天学了什么 / 卡在哪 / 产出</div>
+      <textarea oninput="jrnEdit(${i},'text',this.value)" placeholder="例：跑通了 LeRobot 推理，卡在依赖版本，产出=一段 demo 录屏">${r.text||''}</textarea>
+    </div>`).join('');
+  return `<div class="hint"><h3>📝 练习日志</h3>随手记录每天的学习与踩坑，内容自动存在本地浏览器。配合“每日学习清单”使用。</div>
+    <div class="jtools"><button onclick="jrnAdd()">＋ 新增一条</button><button onclick="jrnExport()">导出为文本</button></div>
+    <div class="jwrap" id="jwrap">${rows.length? list : '<div class="lead">还没有记录，点“＋ 新增一条”开始。</div>'}</div>`;
+}
+function jrnAdd(){ const a=loadJrn(); a.unshift({date:new Date().toISOString().slice(0,10),text:''}); saveJrn(a); show('journal'); }
+function jrnDel(i){ const a=loadJrn(); a.splice(i,1); saveJrn(a); show('journal'); }
+function jrnEdit(i,k,v){ const a=loadJrn(); if(!a[i])return; a[i][k]=v; saveJrn(a); const s=document.getElementById('jsave'+i); if(s){s.textContent='已保存 ✓'; setTimeout(()=>{if(s)s.textContent='';},1200);} }
+function jrnExport(){
+  const a=loadJrn(); if(!a.length){ alert('还没有日志'); return; }
+  const txt=a.map(r=>`## ${r.date}\n${r.text||''}`).join('\n\n');
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob); const link=document.createElement('a');
+  link.href=url; link.download='具身智能练习日志.txt'; link.click(); URL.revokeObjectURL(url);
+}
+
 function show(sid){
   const node = subIndex[sid];
   if(!node) return;
@@ -502,6 +656,8 @@ function show(sid){
   let body;
   if(sub.special==="path") body = renderSpecialPath();
   else if(sub.special==="check") body = renderSpecialCheck();
+  else if(sub.special==="daily") body = renderSpecialDaily();
+  else if(sub.special==="journal") body = renderSpecialJournal();
   else {
     const lead = sub.lead? `<div class="lead">${sub.lead}</div>`:'';
     const cnt = `<span class="cnt">${sub.items.length} 个</span>`;
