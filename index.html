@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>具身智能信息源地图 · 系统学习导航</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --card2:#1d212b; --line:#2a2f3a;
+    --txt:#e6e9ef; --sub:#9aa4b2; --accent:#4f9cf9; --accent2:#2ee6a6;
+    --star:#ffce54; --tag:#242a36; --side:#12151c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",Segoe UI,Roboto,sans-serif;
+    background:var(--bg);color:var(--txt);line-height:1.6;height:100vh;overflow:hidden;}
+  .layout{display:flex;height:100vh;}
+  /* 侧边栏 */
+  aside{width:288px;flex:0 0 288px;background:var(--side);border-right:1px solid var(--line);
+    display:flex;flex-direction:column;height:100vh;}
+  .brand{padding:18px 18px 10px;}
+  .brand h1{font-size:18px;margin:0 0 4px;}
+  .brand .sub{color:var(--sub);font-size:12px;}
+  .side-search{padding:4px 14px 10px;}
+  .side-search input{width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);
+    background:var(--card);color:var(--txt);font-size:13px;outline:none;}
+  .side-search input:focus{border-color:var(--accent);}
+  .menu{flex:1;overflow-y:auto;padding:4px 10px 18px;}
+  .grp{margin-bottom:4px;}
+  .grp>.ghead{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:9px 12px;border-radius:9px;color:var(--txt);font-size:14px;font-weight:600;cursor:pointer;user-select:none;}
+  .grp>.ghead:hover{background:var(--card);}
+  .grp>.ghead .arw{color:var(--sub);font-size:11px;transition:transform .15s;}
+  .grp.open>.ghead .arw{transform:rotate(90deg);}
+  .subs{overflow:hidden;max-height:0;transition:max-height .2s ease;}
+  .grp.open .subs{max-height:900px;}
+  .subs a{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:7px 12px 7px 26px;border-radius:8px;color:var(--sub);font-size:13px;text-decoration:none;cursor:pointer;margin:1px 0;}
+  .subs a .cnt{font-size:10.5px;color:#6b7482;background:var(--tag);border-radius:999px;padding:1px 7px;}
+  .subs a:hover{color:var(--txt);background:var(--card);}
+  .subs a.active{color:#fff;background:var(--accent);}
+  .subs a.active .cnt{color:#fff;background:rgba(255,255,255,.2);}
+  /* 右侧内容 */
+  main{flex:1;height:100vh;overflow-y:auto;padding:22px 24px 48px;}
+  .crumb{color:var(--sub);font-size:12px;margin-bottom:6px;}
+  .crumb b{color:var(--accent);font-weight:600;}
+  .sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:9px;}
+  .sec-head h2{font-size:20px;margin:0;}
+  .sec-head .cnt{color:var(--sub);font-size:13px;}
+  .sec-head .tip{margin-left:auto;color:var(--sub);font-size:12px;}
+  .lead{color:var(--sub);font-size:13px;margin:-4px 0 14px;}
+  .grid{column-gap:14px;column-width:330px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:9px 12px;transition:.15s;
+    break-inside:avoid;margin:0 0 9px;display:flex;flex-direction:column;}
+  .card:hover{border-color:var(--accent);background:var(--card2);}
+  .card a.name{font-size:14px;font-weight:600;color:var(--txt);text-decoration:none;}
+  .card a.name:hover{color:var(--accent);}
+  .card .star{color:var(--star);margin-right:3px;}
+  .card .desc{color:var(--sub);font-size:12px;margin:3px 0 6px;line-height:1.45;}
+  .card .links{display:flex;flex-wrap:wrap;gap:5px;}
+  .card .links a{font-size:11.5px;color:var(--accent);text-decoration:none;background:var(--tag);
+    padding:2px 8px;border-radius:6px;border:1px solid var(--line);}
+  .card .links a:hover{background:#2b3240;}
+  .hint{background:var(--card2);border:1px dashed var(--line);border-radius:12px;padding:16px;color:var(--sub);font-size:13px;margin-bottom:12px;}
+  .hint h3{color:var(--txt);margin:0 0 8px;font-size:15px;}
+  .hint ol,.hint ul{margin:6px 0 0;padding-left:20px;}
+  .hint li{margin:3px 0;}
+  .hint b{color:var(--txt);}
+  .path{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+  .step .n{display:inline-block;background:var(--accent);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:1px 10px;margin-bottom:8px;}
+  .step h4{margin:0 0 6px;font-size:15px;}
+  .step p{margin:0;color:var(--sub);font-size:12.5px;}
+  .step .go{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;}
+  .step .go a{font-size:11.5px;color:var(--accent);text-decoration:none;background:var(--tag);padding:2px 8px;border-radius:6px;border:1px solid var(--line);cursor:pointer;}
+  .foot{margin-top:28px;color:var(--sub);font-size:12px;border-top:1px solid var(--line);padding-top:14px;}
+  .hidden{display:none !important;}
+  /* 移动端顶部条 + 抽屉遮罩（桌面隐藏） */
+  .mtop{display:none;}
+  .overlay{display:none;}
+  @media(max-width:760px){
+    /* 顶部条：汉堡 + 标题 */
+    .mtop{display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:40;
+      background:var(--side);border-bottom:1px solid var(--line);padding:10px 14px;}
+    .mtop .burger{width:40px;height:40px;flex:0 0 40px;border:1px solid var(--line);background:var(--card);
+      border-radius:10px;color:var(--txt);font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+    .mtop .mtitle{font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    /* 整体回到普通文档流滚动 */
+    body{overflow:auto;height:auto;}
+    .layout{display:block;height:auto;}
+    /* 抽屉式侧边栏：默认移出屏幕 */
+    aside{position:fixed;top:0;left:0;z-index:60;width:84%;max-width:320px;height:100vh;
+      flex:none;border-right:1px solid var(--line);
+      transform:translateX(-100%);transition:transform .22s ease;box-shadow:2px 0 18px rgba(0,0,0,.4);}
+    body.drawer-open aside{transform:translateX(0);}
+    .overlay{display:block;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);
+      opacity:0;pointer-events:none;transition:opacity .22s ease;}
+    body.drawer-open .overlay{opacity:1;pointer-events:auto;}
+    .menu{flex:1;max-height:none;}
+    /* 内容区铺满、单列卡片、加大触控区 */
+    main{height:auto;padding:14px 14px 48px;}
+    .grid{column-width:auto;column-count:1;}
+    .sec-head h2{font-size:18px;}
+    .card{padding:11px 13px;}
+    .card a.name{font-size:15px;}
+    .card .desc{font-size:13px;}
+    .card .links a,.step .go a{font-size:13px;padding:6px 11px;}
+    .path{grid-template-columns:1fr;}
+    .hint{padding:14px;}
+  }
+</style>
+</head>
+<body>
+<div class="mtop">
+  <div class="burger" id="burger" aria-label="菜单" role="button">☰</div>
+  <div class="mtitle">🤖 具身智能信息源地图</div>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="layout">
+  <aside>
+    <div class="brand">
+      <h1>🤖 具身智能信息源地图</h1>
+      <div class="sub">系统学习导航 ｜ 2026-11-03 ｜ <span class="star">★</span> 优先推荐</div>
+    </div>
+    <div class="side-search">
+      <input id="q" placeholder="🔍 搜索全部源（跨所有分类）…" oninput="filter()">
+    </div>
+    <nav class="menu" id="menu"></nav>
+  </aside>
+  <main id="content"></main>
+</div>
+
+<script>
+/* 两级结构：GROUPS[] -> subs[] -> items[]
+   item: {star, name, desc, links:[[label,url], ...]} */
+const GROUPS = [
+  {id:"start", icon:"🧭", title:"开始这里", subs:[
+    {id:"path", title:"学习路线图", lead:"从零到能复现 VLA 的推荐顺序，每步配直达入口。", special:"path"},
+    {id:"check", title:"日常巡检清单", lead:"省时版：每天/每周固定看这几个就够。", special:"check"},
+  ]},
+
+  {id:"report", icon:"📊", title:"报告与研究", subs:[
+    {id:"rpt-org", title:"权威机构 / 标准院所", lead:"白皮书、产业报告、测评标准的一手来源。", items:[
+      {star:1,name:"中国信通院 CAICT",desc:"白皮书与专题报告最密集，本合集训练场报告即来自此。",links:[["官网","http://www.caict.ac.cn"],["权威发布","http://www.caict.ac.cn/kxyj/qwfb/"]]},
+      {name:"中国电子学会",desc:"《中国机器人产业发展报告》年度主力。",links:[["官网","http://www.cie.org.cn"]]},
+      {name:"中国电子技术标准化研究院 CESI",desc:"标准与测评。",links:[["官网","http://www.cesi.cn"]]},
+      {name:"北京人形机器人创新中心",desc:"国家地方共建具身智能机器人创新中心。",links:[["官网","https://www.x-humanoid.com"]]},
+      {name:"中国人工智能产业发展联盟 AIIA",desc:"联盟级报告与标准。",links:[["官网","http://www.aiiaorg.cn"]]},
+      {name:"中国机器人产业联盟 CRIA",desc:"产业联盟数据。",links:[["官网","http://cria.mei.net.cn"]]},
+      {name:"高工机器人 GGII",desc:"人形机器人出货/产业链数据。",links:[["官网","https://www.gaogong123.com"]]},
+      {name:"MIR 睿工业",desc:"工业机器人市场数据。",links:[["官网","https://www.mirdata.cn"]]},
+    ]},
+    {id:"rpt-consult", title:"咨询 / 智库 / 券商研报", lead:"市场测算、赛道判断、卖方深度。", items:[
+      {star:1,name:"IDC 中国",desc:"具身智能/机器人市场预测。",links:[["官网","https://www.idc.com/cn"]]},
+      {name:"艾瑞咨询 iResearch",desc:"互联网与科技产业研究。",links:[["官网","https://www.iresearch.com.cn"]]},
+      {name:"头豹研究院 Leadleo",desc:"细分行业报告丰富。",links:[["官网","https://www.leadleo.com"]]},
+      {name:"亿欧智库",desc:"科技产业报告。",links:[["官网","https://www.iyiou.com/intelligence"]]},
+      {name:"36氪研究院",desc:"创投视角产业报告。",links:[["官网","https://36kr.com"]]},
+      {name:"甲子光年",desc:"硬科技智库。",links:[["官网","https://www.jazzyear.com"]]},
+      {name:"量子位智库",desc:"AI 产业智库。",links:[["官网","https://www.qbitai.com"]]},
+      {name:"沙利文 Frost & Sullivan 中国",desc:"市场测算与份额。",links:[["官网","https://www.frostchina.com"]]},
+      {name:"赛迪顾问 CCID",desc:"工信体系智库。",links:[["官网","https://www.ccidgroup.com"]]},
+      {name:"麦肯锡 / 波士顿 BCG",desc:"海外顶级咨询的机器人专题。",links:[["McKinsey","https://www.mckinsey.com"],["BCG","https://www.bcg.com"]]},
+    ]},
+    {id:"rpt-agg", title:"报告聚合平台（可直接搜下载）", lead:"直接搜“具身智能/人形机器人”即可拿研报。", items:[
+      {star:1,name:"未来智库 vzkoo",desc:"大量机构报告可搜可下。",links:[["官网","https://www.vzkoo.com"]]},
+      {star:1,name:"慧博投研",desc:"券商行业深度研报聚合。",links:[["官网","https://www.hibor.com.cn"]]},
+      {name:"发现报告",desc:"研报聚合搜索。",links:[["官网","https://www.fxbaogao.com"]]},
+      {name:"东方财富研报中心",desc:"券商研报原文。",links:[["官网","https://data.eastmoney.com/report/"]]},
+      {name:"原创力文档 book118",desc:"文档/报告检索。",links:[["官网","https://max.book118.com"]]},
+      {name:"微铃 microbell",desc:"报告摘要与检索。",links:[["官网","https://www.microbell.cn"]]},
+      {name:"国家科技图书文献中心 NSTL",desc:"官方科技报告门户。",links:[["官网","https://portal.nstl.gov.cn"]]},
+    ]},
+  ]},
+
+  {id:"news", icon:"📰", title:"资讯与动态", subs:[
+    {id:"news-media", title:"新闻 / 行业媒体", lead:"每天的融资、新品、论文速递。", items:[
+      {star:1,name:"机器之心",desc:"技术+产业，质量高。",links:[["官网","https://www.jiqizhixin.com"]]},
+      {star:1,name:"量子位",desc:"AI 动态速递。",links:[["官网","https://www.qbitai.com"]]},
+      {name:"新智元",desc:"AI 前沿资讯（多在公众号）。",links:[["官网","https://www.ai-era.com"]]},
+      {name:"雷峰网 / AI科技评论",desc:"深度报道。",links:[["官网","https://www.leiphone.com"]]},
+      {name:"36氪",desc:"创投与融资。",links:[["官网","https://36kr.com"]]},
+      {name:"钛媒体",desc:"科技商业。",links:[["官网","https://www.tmtpost.com"]]},
+      {name:"虎嗅",desc:"科技商业评论。",links:[["官网","https://www.huxiu.com"]]},
+      {name:"高工机器人网",desc:"机器人产业新闻。",links:[["官网","https://www.gg-robot.com"]]},
+      {name:"OFweek 机器人网",desc:"机器人行业资讯。",links:[["官网","https://robot.ofweek.com"]]},
+      {name:"IEEE Spectrum Robotics",desc:"海外权威机器人报道。",links:[["栏目","https://spectrum.ieee.org/robotics"]]},
+      {name:"The Robot Report",desc:"海外机器人产业媒体。",links:[["官网","https://www.therobotreport.com"]]},
+      {name:"TechCrunch Robotics",desc:"海外创投机器人。",links:[["栏目","https://techcrunch.com/tag/robotics/"]]},
+      {name:"Humanoids Daily",desc:"人形机器人垂直媒体。",links:[["官网","https://www.humanoidsdaily.com"]]},
+    ]},
+    {id:"news-wechat", title:"微信公众号", lead:"公众号无稳定直链，用搜狗微信搜名称关注。", items:[
+      {desc:"微信里搜名称关注即可；下方为搜狗微信搜索入口。",name:"📌 使用说明",links:[["微信搜一搜","https://weixin.sogou.com"]]},
+      {star:1,name:"机器之心",desc:"具身/VLA 深度解读多。",links:[["搜","https://weixin.sogou.com/weixin?type=1&query=%E6%9C%BA%E5%99%A8%E4%B9%8B%E5%BF%83"]]},
+      {star:1,name:"量子位",desc:"AI 动态、融资、新品。",links:[["搜","https://weixin.sogou.com/weixin?type=1&query=%E9%87%8F%E5%AD%90%E4%BD%8D"]]},
+      {name:"新智元",desc:"AI 前沿，更新快。",links:[["搜","https://weixin.sogou.com/weixin?type=1&query=%E6%96%B0%E6%99%BA%E5%85%83"]]},
+      {name:"具身智能之心",desc:"垂直具身/机器人学习社区号。",links:[["搜","https://weixin.sogou.com/weixin?type=1&query=%E5%85%B7%E8%BA%AB%E6%99%BA%E8%83%BD%E4%B9%8B%E5%BF%83"]]},
+      {name:"自动驾驶之心",desc:"同系列，含具身技术栈。",links:[["搜","https://weixin.sogou.com/weixin?type=1&query=%E8%87%AA%E5%8A%A8%E9%A9%BE%E9%A9%B6%E4%B9%8B%E5%BF%83"]]},
+      {name:"深蓝学院",desc:"机器人/SLAM/具身课程推文。",links:[["搜","https://weixin.sogou.com/weixin?type=1&query=%E6%B7%B1%E8%93%9D%E5%AD%A6%E9%99%A2"]]},
+      {name:"PaperWeekly",desc:"学术论文精读。",links:[["搜","https://weixin.sogou.com/weixin?type=1&query=PaperWeekly"]]},
+      {name:"将门创投 TechBeat",desc:"前沿技术+创投分享。",links:[["搜","https://weixin.sogou.com/weixin?type=1&query=%E5%B0%86%E9%97%A8%E5%88%9B%E6%8A%95"]]},
+      {name:"高工机器人",desc:"产业链、量产跟踪。",links:[["搜","https://weixin.sogou.com/weixin?type=1&query=%E9%AB%98%E5%B7%A5%E6%9C%BA%E5%99%A8%E4%BA%BA"]]},
+      {name:"信通院 CAICT",desc:"白皮书首发常在公众号。",links:[["搜","https://weixin.sogou.com/weixin?type=1&query=%E4%B8%AD%E5%9B%BD%E4%BF%A1%E9%80%9A%E9%99%A2"]]},
+    ]},
+    {id:"news-video", title:"B站 / 视频", lead:"UP 主 ID 易变，用关键词搜索入口最稳。", items:[
+      {desc:"进去按“最多播放/最新”筛选。",name:"📌 使用说明",links:[["B站搜具身智能","https://search.bilibili.com/all?keyword=%E5%85%B7%E8%BA%AB%E6%99%BA%E8%83%BD"]]},
+      {star:1,name:"搜“具身智能 入门/综述”",desc:"系统入门、技术架构、产业落地。",links:[["搜","https://search.bilibili.com/all?keyword=%E5%85%B7%E8%BA%AB%E6%99%BA%E8%83%BD%20%E5%85%A5%E9%97%A8"]]},
+      {star:1,name:"搜“VLA 模型精讲”",desc:"VLA 论文/代码精讲。",links:[["搜","https://search.bilibili.com/all?keyword=VLA%20%E6%A8%A1%E5%9E%8B%E7%B2%BE%E8%AE%B2"]]},
+      {name:"搜“LeRobot 实战”",desc:"从仿真到实机动手教程。",links:[["搜","https://search.bilibili.com/all?keyword=LeRobot%20%E5%85%B7%E8%BA%AB%E6%99%BA%E8%83%BD"]]},
+      {name:"深蓝学院（官方号）",desc:"机器人/SLAM/具身课程切片。",links:[["搜","https://search.bilibili.com/all?keyword=%E6%B7%B1%E8%93%9D%E5%AD%A6%E9%99%A2"]]},
+      {name:"古月居 GuYueJu",desc:"ROS/机器人开发教学。",links:[["搜","https://search.bilibili.com/all?keyword=%E5%8F%A4%E6%9C%88%E5%B1%85"]]},
+      {name:"同济子豪兄",desc:"AI 论文精读与复现。",links:[["搜","https://search.bilibili.com/all?keyword=%E5%90%8C%E6%B5%8E%E5%AD%90%E8%B1%AA%E5%85%84"]]},
+      {name:"厂商官方号",desc:"宇树/智元/优必选产品演示。",links:[["搜宇树","https://search.bilibili.com/all?keyword=%E5%AE%87%E6%A0%91%E7%A7%91%E6%8A%80"],["搜智元","https://search.bilibili.com/all?keyword=%E6%99%BA%E5%85%83%E6%9C%BA%E5%99%A8%E4%BA%BA"]]},
+      {name:"YouTube（海外）",desc:"Figure/1X/BD 官方演示与顶会 talk。",links:[["搜 embodied AI","https://www.youtube.com/results?search_query=embodied+ai+robot"]]},
+    ]},
+    {id:"news-podcast", title:"播客 / 音频", lead:"通勤碎片时间听趋势与访谈。", items:[
+      {desc:"中文播客以小宇宙为主。",name:"📌 使用说明",links:[["小宇宙搜","https://www.xiaoyuzhoufm.com/search?q=%E5%85%B7%E8%BA%AB%E6%99%BA%E8%83%BD"]]},
+      {star:1,name:"小宇宙搜“具身智能/机器人”",desc:"中文科技播客聚合。",links:[["搜","https://www.xiaoyuzhoufm.com/search?q=%E6%9C%BA%E5%99%A8%E4%BA%BA"]]},
+      {name:"张小珺商业访谈录",desc:"常邀具身/AI 创业者深聊。",links:[["搜","https://www.xiaoyuzhoufm.com/search?q=%E5%BC%A0%E5%B0%8F%E7%8F%B5"]]},
+      {name:"硅谷101",desc:"科技产业与出海视角。",links:[["搜","https://www.xiaoyuzhoufm.com/search?q=%E7%A1%85%E8%B0%B7101"]]},
+      {name:"TWIML AI Podcast",desc:"海外 ML/机器人访谈。",links:[["官网","https://twimlai.com/podcast/"]]},
+      {name:"Robohub Podcast",desc:"机器人学界/业界访谈。",links:[["官网","https://robohub.org/category/podcast/"]]},
+    ]},
+    {id:"news-letter", title:"邮件周报 / Newsletter", lead:"订阅后每周自动推送，省去自己翻。", items:[
+      {star:1,name:"The Batch（deeplearning.ai）",desc:"吴恩达团队 AI 周报。",links:[["订阅","https://www.deeplearning.ai/the-batch/"]]},
+      {name:"Import AI（Jack Clark）",desc:"AI 政策/前沿每周综述。",links:[["订阅","https://importai.substack.com"]]},
+      {name:"The Robot Report Newsletter",desc:"机器人产业每周要闻。",links:[["官网","https://www.therobotreport.com"]]},
+      {name:"Hugging Face Daily Papers",desc:"每日论文可邮件/RSS。",links:[["官网","https://huggingface.co/papers"]]},
+      {name:"Last Week in AI",desc:"AI 一周大事综述。",links:[["订阅","https://lastweekin.ai"]]},
+    ]},
+  ]},
+
+  {id:"learn", icon:"🎓", title:"学术与学习", subs:[
+    {id:"learn-paper", title:"论文检索 / 学术平台", lead:"找最新论文、代码、榜单。", items:[
+      {star:1,name:"arXiv — 机器人 cs.RO",desc:"具身/VLA/机器人学习主阵地。",links:[["cs.RO 最新","https://arxiv.org/list/cs.RO/recent"],["主站","https://arxiv.org"]]},
+      {star:1,name:"Hugging Face Papers",desc:"每日热门论文带讨论。",links:[["官网","https://huggingface.co/papers"]]},
+      {name:"Papers with Code",desc:"论文+代码+榜单+数据集。",links:[["官网","https://paperswithcode.com"]]},
+      {name:"Google Scholar",desc:"学术检索。",links:[["官网","https://scholar.google.com"]]},
+      {name:"Semantic Scholar",desc:"AI 驱动文献检索。",links:[["官网","https://www.semanticscholar.org"]]},
+      {name:"Connected Papers",desc:"论文引用关系图谱。",links:[["官网","https://www.connectedpapers.com"]]},
+      {name:"顶会聚合 Guide2Research",desc:"CoRL/ICRA/IROS/RSS/NeurIPS 等。",links:[["官网","http://www.guide2research.com"]]},
+    ]},
+    {id:"learn-journal", title:"核心期刊 / 会议", lead:"系统读综述与长文。", items:[
+      {name:"《机器人》ROBOT",desc:"国内机器人核心期刊。",links:[["官网","http://robot.sia.cn"]]},
+      {name:"《自动化学报》",desc:"自动化领域权威。",links:[["官网","http://www.aas.net.cn"]]},
+      {name:"《中国科学：信息科学》",desc:"含具身智能算法专题。",links:[["官网","https://www.sciengine.com"]]},
+      {name:"《中国图象图形学报》",desc:"开放获取，含具身评测。",links:[["官网","https://www.cjig.cn"]]},
+      {name:"《工程科学学报》",desc:"北科大，开放录用稿。",links:[["官网","https://cje.ustb.edu.cn"]]},
+      {name:"IEEE T-RO / RA-L",desc:"机器人领域顶刊/快报。",links:[["T-RO","https://www.ieee-ras.org/publications/t-ro"]]},
+      {name:"Science Robotics",desc:"机器人旗舰期刊。",links:[["官网","https://www.science.org/journal/scirobotics"]]},
+      {name:"Embodied AI Workshop",desc:"CVPR 系列具身研讨会。",links:[["官网","https://embodied-ai.org"]]},
+    ]},
+    {id:"learn-course", title:"公开课 / 系统教程", lead:"成体系学一遍，从基础到前沿。", items:[
+      {desc:"按“数学/控制→RL→机器人学→VLA 前沿”顺序。",name:"📌 使用说明",links:[["Coursera","https://www.coursera.org"]]},
+      {star:1,name:"Stanford CS223A 机器人学导论",desc:"运动学/动力学/控制经典课。",links:[["课程","https://cs223a.stanford.edu"]]},
+      {star:1,name:"Modern Robotics 公开课",desc:"西北大学配套视频+讲义。",links:[["官网","https://modernrobotics.northwestern.edu"],["YouTube","https://www.youtube.com/playlist?list=PLggLP4f-rq02vX0OQQ5vrCxbJrzamYDfx"]]},
+      {name:"Berkeley CS285 深度强化学习",desc:"RL 系统课，具身控制基础。",links:[["课程","https://rail.eecs.berkeley.edu/deeprlcourse/"]]},
+      {name:"CMU 16-831 机器人学习",desc:"含模仿/强化学习。",links:[["搜","https://www.google.com/search?q=CMU+16-831+robot+learning"]]},
+      {name:"动手学深度学习 D2L",desc:"李沐，开源可运行中文教材+视频。",links:[["官网","https://zh.d2l.ai"]]},
+      {name:"深蓝学院 / 古月学院",desc:"国内机器人/SLAM/具身系统课。",links:[["深蓝","https://www.shenlanxueyuan.com"]]},
+      {name:"LeRobot 教程",desc:"HF 官方从仿真到实机。",links:[["文档","https://huggingface.co/docs/lerobot"]]},
+    ]},
+    {id:"learn-book", title:"相关书籍", lead:"打基础用，链接到简介/免费版。", items:[
+      {desc:"到京东/当当/微信读书检索纸质版。",name:"📌 使用说明",links:[["豆瓣读书","https://book.douban.com"],["微信读书","https://weread.qq.com"]]},
+      {star:1,name:"《具身智能》中文入门读物",desc:"概念、技术与应用（按书名+2024/2025 检索）。",links:[["豆瓣搜","https://search.douban.com/book/subject_search?search_text=%E5%85%B7%E8%BA%AB%E6%99%BA%E8%83%BD"]]},
+      {star:1,name:"《机器人学导论》Craig",desc:"运动学/动力学经典教材。",links:[["豆瓣搜","https://search.douban.com/book/subject_search?search_text=%E6%9C%BA%E5%99%A8%E4%BA%BA%E5%AD%A6%E5%AF%BC%E8%AE%BA"]]},
+      {name:"《Modern Robotics》",desc:"Lynch & Park，配套公开课。",links:[["官网","https://modernrobotics.northwestern.edu"]]},
+      {name:"《Probabilistic Robotics》",desc:"Thrun，定位/SLAM 经典。",links:[["豆瓣搜","https://search.douban.com/book/subject_search?search_text=Probabilistic+Robotics"]]},
+      {name:"《Planning Algorithms》",desc:"LaValle，运动规划，免费在线。",links:[["免费","http://lavalle.pl/planning/"]]},
+      {name:"《RL: An Introduction》",desc:"Sutton & Barto，RL 圣经，免费 PDF。",links:[["免费","http://incompleteideas.net/book/the-book-2nd.html"]]},
+      {name:"《Deep Learning》花书",desc:"Goodfellow，免费在线。",links:[["官网","https://www.deeplearningbook.org"]]},
+      {name:"《Dive into Deep Learning》",desc:"李沐，开源可运行。",links:[["官网","https://zh.d2l.ai"]]},
+      {name:"《Springer Handbook of Robotics》",desc:"机器人百科级工具书。",links:[["豆瓣搜","https://search.douban.com/book/subject_search?search_text=Springer+Handbook+of+Robotics"]]},
+    ]},
+  ]},
+
+  {id:"tech", icon:"🐙", title:"开源与技术", subs:[
+    {id:"tech-awesome", title:"Awesome 清单", lead:"持续收录论文/模型/数据集的精选列表。", items:[
+      {star:1,name:"Awesome-Embodied-AI",desc:"综述/VLA/数据集/仿真/人形，活跃维护。",links:[["仓库","https://github.com/wadeKeith/Awesome-Embodied-AI"]]},
+      {star:1,name:"awesome-embodied-vla-va-vln",desc:"VLA/VLN/WAM 前沿清单。",links:[["仓库","https://github.com/jonyzhang2023/awesome-embodied-vla-va-vln"]]},
+      {name:"Awesome-VLA",desc:"VLA 模型/基准/数据集，含复现。",links:[["仓库","https://github.com/LukeLIN-web/Awesome-VLA"]]},
+      {name:"awesome-physical-ai",desc:"物理 AI/世界模型/仿真清单。",links:[["仓库","https://github.com/backblaze-labs/awesome-physical-ai"]]},
+      {name:"Awesome-WAM",desc:"世界动作模型综述资源。",links:[["仓库","https://github.com/OpenMOSS/Awesome-WAM"]]},
+    ]},
+    {id:"tech-model", title:"模型 / 框架（可跑）", lead:"能微调、能部署的代码基座。", items:[
+      {star:1,name:"🤗 LeRobot",desc:"HF 真实世界机器人学习库，入门首选。",links:[["仓库","https://github.com/huggingface/lerobot"],["HF","https://huggingface.co/lerobot"]]},
+      {star:1,name:"OpenVLA",desc:"开源 VLA 基座模型，可微调部署。",links:[["仓库","https://github.com/openvla/openvla"],["项目","https://openvla.github.io"]]},
+      {name:"NVIDIA Isaac GR00T",desc:"开源人形 VLA 基座与开发平台。",links:[["仓库","https://github.com/NVIDIA/Isaac-GR00T"]]},
+      {name:"π0 / openpi",desc:"Physical Intelligence 开源 VLA。",links:[["仓库","https://github.com/Physical-Intelligence/openpi"]]},
+      {name:"RDT-1B",desc:"扩散式双臂操作基座模型。",links:[["项目","https://rdt-robotics.github.io"]]},
+      {name:"Octo",desc:"通用机器人策略 Transformer。",links:[["项目","https://octo-models.github.io"]]},
+    ]},
+    {id:"tech-sim", title:"仿真平台 / 引擎", lead:"训练与评测的虚拟环境。", items:[
+      {star:1,name:"NVIDIA Isaac Lab / Sim",desc:"GPU 加速机器人学习/仿真。",links:[["仓库","https://github.com/isaac-sim/IsaacLab"],["官网","https://developer.nvidia.com/isaac/sim"]]},
+      {star:1,name:"Genesis",desc:"高性能开源物理仿真，上手快。",links:[["仓库","https://github.com/Genesis-Embodied-AI/Genesis"]]},
+      {name:"MuJoCo",desc:"物理仿真引擎，RL/控制标配。",links:[["官网","https://mujoco.org"]]},
+      {name:"SAPIEN",desc:"部件级可交互仿真。",links:[["官网","https://sapien.ucsd.edu"]]},
+      {name:"PyBullet",desc:"轻量易上手物理仿真。",links:[["官网","https://pybullet.org"]]},
+      {name:"Gazebo / ROS",desc:"经典机器人仿真与中间件。",links:[["Gazebo","https://gazebosim.org"],["ROS","https://www.ros.org"]]},
+    ]},
+    {id:"tech-data", title:"数据集 / 仿真资产", lead:"训练/复现用的数据与资产。", items:[
+      {desc:"HF 上可按 robot 关键词筛数据集。",name:"📌 使用说明",links:[["HF Datasets","https://huggingface.co/datasets?search=robot"]]},
+      {star:1,name:"Open X-Embodiment",desc:"跨机构大规模真机数据集（RT-X）。",links:[["项目","https://robotics-transformer-x.github.io"]]},
+      {star:1,name:"🤗 LeRobot Datasets",desc:"HF 海量社区机器人数据集。",links:[["数据集","https://huggingface.co/datasets?search=lerobot"]]},
+      {name:"DROID",desc:"大规模分布式真机操作数据集。",links:[["官网","https://droid-dataset.github.io"]]},
+      {name:"BridgeData V2",desc:"多任务机器人操作数据集。",links:[["官网","https://rail-berkeley.github.io/bridgedata/"]]},
+      {name:"Ego4D / Ego-Exo4D",desc:"第一人称视频，具身感知常用。",links:[["官网","https://ego4d-data.org"]]},
+      {name:"RoboMIND / AgiBot World",desc:"大规模真机操作数据集（国内）。",links:[["AgiBot World","https://agibot-world.com"]]},
+    ]},
+    {id:"tech-rank", title:"榜单 / 基准 / 排行", lead:"判断现在谁最强、用什么基座。", items:[
+      {star:1,name:"Papers with Code — Robotics",desc:"机器人任务 SOTA 榜单。",links:[["榜单","https://paperswithcode.com/area/robots"]]},
+      {name:"CALVIN",desc:"长程语言条件操作基准。",links:[["仓库","https://github.com/mees/calvin"]]},
+      {name:"LIBERO",desc:"终身机器人学习基准。",links:[["仓库","https://github.com/Lifelong-Robot-Learning/LIBERO"]]},
+      {name:"ManiSkill",desc:"大规模操作仿真基准。",links:[["官网","https://maniskill.ai"]]},
+      {name:"SimplerEnv",desc:"真机策略的仿真可复现评测。",links:[["仓库","https://github.com/simpler-env/SimplerEnv"]]},
+      {name:"Hugging Face Leaderboards",desc:"模型/数据集榜单聚合。",links:[["榜单","https://huggingface.co/spaces?search=leaderboard"]]},
+    ]},
+  ]},
+
+  {id:"policy", icon:"🏛️", title:"政策与标准", subs:[
+    {id:"pol-cn", title:"国内政策 / 部委", lead:"产业规划、指导意见、标准体系。", items:[
+      {star:1,name:"工业和信息化部",desc:"人形机器人创新发展指导意见。",links:[["官网","https://www.miit.gov.cn"]]},
+      {name:"国家发改委",desc:"产业规划与政策。",links:[["官网","https://www.ndrc.gov.cn"]]},
+      {name:"科学技术部",desc:"科技专项与计划。",links:[["官网","https://www.most.gov.cn"]]},
+      {star:1,name:"中国政府网 政策库",desc:"一站检索各级政策原文。",links:[["政策库","https://www.gov.cn/zhengce/"]]},
+      {name:"北京经信局",desc:"中关村具身智能创新中心。",links:[["官网","http://jxj.beijing.gov.cn"]]},
+      {name:"上海经信委",desc:"浦东具身智能支持政策。",links:[["官网","https://sheitc.sh.gov.cn"]]},
+      {name:"深圳工信局",desc:"整机集成、出海。",links:[["官网","http://gxj.sz.gov.cn"]]},
+      {name:"杭州市政府",desc:"全国首部具身智能产业促进条例。",links:[["官网","https://www.hangzhou.gov.cn"]]},
+    ]},
+    {id:"pol-std", title:"标准组织 / 海外监管", lead:"国际标准、安全规范、AI 监管。", items:[
+      {name:"国家标准全文公开系统",desc:"国标原文查询。",links:[["官网","https://openstd.samr.gov.cn"]]},
+      {name:"全国标准信息公共服务平台",desc:"标准检索。",links:[["官网","https://std.samr.gov.cn"]]},
+      {star:1,name:"IEEE RAS",desc:"机器人顶级学会，标准+顶会主办。",links:[["官网","https://www.ieee-ras.org"]]},
+      {name:"ISO/TC 299 机器人标准",desc:"机器人国际标准委员会。",links:[["官网","https://www.iso.org/committee/5915511.html"]]},
+      {name:"ISO 10218 / 13482",desc:"工业/服务机器人安全标准。",links:[["10218","https://www.iso.org/standard/73933.html"]]},
+      {name:"NIST 机器人测评",desc:"美国国标院性能测试体系。",links:[["官网","https://www.nist.gov/el/intelligent-systems-division-73500"]]},
+      {name:"EU AI Act",desc:"欧盟 AI 监管（含自主系统）。",links:[["官网","https://artificialintelligenceact.eu"]]},
+    ]},
+  ]},
+
+  {id:"industry", icon:"🏢", title:"产业与资本", subs:[
+    {id:"ind-cn", title:"国内企业 / 一手信息", lead:"本体、零部件、大模型厂商官网。", items:[
+      {name:"宇树科技 Unitree",desc:"四足/人形，国内头部。",links:[["官网","https://www.unitree.com"]]},
+      {name:"智元机器人 AgiBot",desc:"人形+具身大模型。",links:[["官网","https://www.agibot.com"]]},
+      {name:"优必选 UBTECH",desc:"人形机器人上市公司。",links:[["官网","https://www.ubtrobot.com"]]},
+      {name:"傅利叶智能 Fourier",desc:"通用人形机器人。",links:[["官网","https://www.fftai.com"]]},
+      {name:"银河通用 Galbot",desc:"具身大模型+机器人。",links:[["官网","https://www.galbot.com"]]},
+      {name:"星动纪元 / 加速进化",desc:"清华系人形创业公司。",links:[["星动纪元","https://www.robotera.com"]]},
+      {name:"它石智航 / 自变量",desc:"具身大模型新锐。",links:[["搜","https://www.google.com/search?q=%E8%87%AA%E5%8F%98%E9%87%8F%E6%9C%BA%E5%99%A8%E4%BA%BA"]]},
+    ]},
+    {id:"ind-global", title:"海外企业 / 研究团队", lead:"明星人形公司与顶级实验室。", items:[
+      {star:1,name:"Tesla Optimus",desc:"特斯拉人形机器人。",links:[["AI页","https://www.tesla.com/AI"]]},
+      {star:1,name:"Figure AI",desc:"明星人形机器人公司。",links:[["官网","https://www.figure.ai"]]},
+      {name:"Boston Dynamics",desc:"Atlas 等。",links:[["官网","https://bostondynamics.com"]]},
+      {name:"Agility Robotics",desc:"Digit / RaaS 模式。",links:[["官网","https://www.agilityrobotics.com"]]},
+      {name:"1X Technologies",desc:"家庭人形机器人。",links:[["官网","https://www.1x.tech"]]},
+      {name:"Apptronik",desc:"Apollo 人形机器人。",links:[["官网","https://apptronik.com"]]},
+      {name:"Physical Intelligence (π)",desc:"通用机器人基座模型公司。",links:[["官网","https://www.physicalintelligence.company"]]},
+      {name:"Google DeepMind Robotics",desc:"机器人学习前沿。",links:[["研究","https://deepmind.google/research"]]},
+    ]},
+    {id:"ind-data", title:"数据 / 二级市场 / 产业链", lead:"上市公司、概念板块、产业链。", items:[
+      {name:"巨潮资讯网",desc:"上市公司定期报告原文。",links:[["官网","http://www.cninfo.com.cn"]]},
+      {name:"东方财富 数据中心",desc:"人形机器人概念板块/行情。",links:[["官网","https://data.eastmoney.com"]]},
+      {name:"同花顺 / Wind",desc:"行情与产业链数据。",links:[["同花顺","https://www.10jqka.com.cn"]]},
+      {name:"企查查 / 天眼查",desc:"企业工商与融资。",links:[["企查查","https://www.qcc.com"],["天眼查","https://www.tianyancha.com"]]},
+    ]},
+    {id:"ind-invest", title:"融资 / 投研专版", lead:"一二级市场资金流向。", items:[
+      {star:1,name:"IT桔子 — 机器人/AI",desc:"一级市场融资事件与估值。",links:[["官网","https://www.itjuzi.com"]]},
+      {name:"Crunchbase",desc:"海外创投融资数据库。",links:[["官网","https://www.crunchbase.com"]]},
+      {name:"CB Insights",desc:"机构级投研与赛道报告。",links:[["官网","https://www.cbinsights.com"]]},
+      {name:"东方财富 人形机器人板块",desc:"二级市场概念股资金。",links:[["板块","https://data.eastmoney.com"]]},
+      {name:"慧博 / 发现报告 研报",desc:"卖方深度（搜“人形机器人”）。",links:[["慧博","https://www.hibor.com.cn"]]},
+    ]},
+  ]},
+
+  {id:"community", icon:"💻", title:"社区与活动", subs:[
+    {id:"com-forum", title:"社区 / 论坛 / 问答", lead:"日常讨论、答疑、追人。", items:[
+      {star:1,name:"知乎「具身智能」话题",desc:"中文最活跃的讨论与经验贴。",links:[["话题","https://www.zhihu.com/topic/20641042"],["搜","https://www.zhihu.com/search?type=content&q=%E5%85%B7%E8%BA%AB%E6%99%BA%E8%83%BD"]]},
+      {name:"Reddit r/robotics",desc:"海外机器人综合社区。",links:[["版块","https://www.reddit.com/r/robotics/"]]},
+      {name:"Reddit r/MachineLearning",desc:"ML/具身论文讨论。",links:[["版块","https://www.reddit.com/r/MachineLearning/"]]},
+      {name:"Hugging Face 论坛",desc:"模型/数据集/LeRobot 讨论。",links:[["论坛","https://discuss.huggingface.co"]]},
+      {name:"ROS Discourse",desc:"ROS/机器人开发官方社区。",links:[["官网","https://discourse.ros.org"]]},
+      {name:"Robotics Stack Exchange",desc:"工程问题问答。",links:[["官网","https://robotics.stackexchange.com"]]},
+      {name:"X（Twitter）具身圈",desc:"关注研究者第一手动态。",links:[["搜","https://x.com/search?q=embodied%20AI&f=live"]]},
+    ]},
+    {id:"com-event", title:"展会 / 顶会日程", lead:"关注投稿截止与现场发布。", items:[
+      {star:1,name:"ICRA",desc:"机器人领域旗舰顶会。",links:[["官网","https://www.ieee-ras.org/conferences-workshops/fully-sponsored/icra"]]},
+      {star:1,name:"IROS",desc:"IEEE/RSJ 顶级会议。",links:[["搜","https://www.google.com/search?q=IROS+2026"]]},
+      {name:"CoRL 机器人学习大会",desc:"具身/机器人学习前沿首发。",links:[["官网","https://www.corl.org"]]},
+      {name:"RSS",desc:"小而精的机器人顶会。",links:[["官网","https://roboticsconference.org"]]},
+      {name:"NeurIPS / CVPR / ICLR / ICML",desc:"AI 顶会，含具身/VLA 专题。",links:[["NeurIPS","https://neurips.cc"],["CVPR","https://cvpr.thecvf.com"]]},
+      {name:"WRC 世界机器人大会",desc:"国内最大机器人展（北京）。",links:[["官网","https://www.worldrobotconference.com"]]},
+      {name:"WAIC 世界人工智能大会",desc:"上海，具身近年重头戏。",links:[["官网","https://www.worldaic.com.cn"]]},
+      {name:"CES / Hannover Messe",desc:"海外消费电子与工业展。",links:[["CES","https://www.ces.tech"]]},
+    ]},
+  ]},
+];
+
+/* ---- 运行时 ---- */
+const content = document.getElementById('content');
+const menuBox = document.getElementById('menu');
+/* 移动端抽屉开关 */
+const burger = document.getElementById('burger');
+const overlay = document.getElementById('overlay');
+function openDrawer(){ document.body.classList.add('drawer-open'); }
+function closeDrawer(){ document.body.classList.remove('drawer-open'); }
+function toggleDrawer(){ document.body.classList.toggle('drawer-open'); }
+if(burger) burger.onclick = toggleDrawer;
+if(overlay) overlay.onclick = closeDrawer;
+const subIndex = {}; // subId -> {grp, sub}
+GROUPS.forEach(g=>g.subs.forEach(s=>subIndex[s.id]={grp:g, sub:s}));
+
+let activeSub = GROUPS[0].subs[0].id;
+
+/* 构建两级菜单 */
+GROUPS.forEach((g,gi)=>{
+  const grp = document.createElement('div');
+  grp.className = 'grp' + (gi===0?' open':'');
+  grp.dataset.gid = g.id;
+  const total = g.subs.reduce((n,s)=>n+(s.items?s.items.length:0),0);
+  grp.innerHTML = `<div class="ghead"><span>${g.icon} ${g.title}</span><span class="arw">▶</span></div>
+    <div class="subs">${g.subs.map(s=>{
+      const cnt = s.items? `<span class="cnt">${s.items.length}</span>`:'';
+      return `<a data-sid="${s.id}">${s.title}${cnt}</a>`;
+    }).join('')}</div>`;
+  grp.querySelector('.ghead').onclick = ()=>grp.classList.toggle('open');
+  grp.querySelectorAll('.subs a').forEach(a=>{
+    a.onclick = ()=>{ document.getElementById('q').value=''; show(a.dataset.sid); closeDrawer(); };
+  });
+  menuBox.appendChild(grp);
+});
+
+function cardHTML(it){
+  const firstUrl = (it.links[0]||['',''])[1] || '#';
+  const star = it.star? '<span class="star">★</span>':'';
+  const links = it.links.map(l=>`<a href="${l[1]}" target="_blank" rel="noopener">${l[0]} ↗</a>`).join('');
+  const nameHTML = firstUrl!=='#'
+    ? `<a class="name" href="${firstUrl}" target="_blank" rel="noopener">${star}${it.name}</a>`
+    : `<span class="name">${star}${it.name}</span>`;
+  return `<div class="card">${nameHTML}<div class="desc">${it.desc}</div><div class="links">${links}</div></div>`;
+}
+
+function renderSpecialPath(){
+  const steps = [
+    {n:"Step 1", h:"打基础：数学 + 深度学习", p:"线代/概率/最优化 + 深度学习框架，先会用 PyTorch。", go:[["动手学 D2L","https://zh.d2l.ai"],["花书","https://www.deeplearningbook.org"]]},
+    {n:"Step 2", h:"机器人学 + 控制", p:"运动学/动力学/规划/控制，建立“机器人怎么动”的直觉。", go:[["Modern Robotics","https://modernrobotics.northwestern.edu"],["CS223A","https://cs223a.stanford.edu"]]},
+    {n:"Step 3", h:"强化学习 + 模仿学习", p:"策略学习的两条主线，具身控制的核心方法。", go:[["CS285","https://rail.eecs.berkeley.edu/deeprlcourse/"],["RL圣经","http://incompleteideas.net/book/the-book-2nd.html"]]},
+    {n:"Step 4", h:"读综述建立全局观", p:"先读 2–3 篇具身/VLA 综述，再追 arXiv 新论文。", go:[["arXiv cs.RO","https://arxiv.org/list/cs.RO/recent"],["HF Papers","https://huggingface.co/papers"]]},
+    {n:"Step 5", h:"动手跑仿真", p:"用 Isaac Lab / Genesis / ManiSkill 跑通一个操作任务。", go:[["Isaac Lab","https://github.com/isaac-sim/IsaacLab"],["Genesis","https://github.com/Genesis-Embodied-AI/Genesis"]]},
+    {n:"Step 6", h:"复现 VLA 模型", p:"从 LeRobot / OpenVLA 入手，跑通训练与推理。", go:[["LeRobot","https://github.com/huggingface/lerobot"],["OpenVLA","https://github.com/openvla/openvla"]]},
+    {n:"Step 7", h:"用真数据 / 真机", p:"接入 Open X-Embodiment / DROID 数据，或低成本实机。", go:[["Open X-Emb","https://robotics-transformer-x.github.io"],["Mobile ALOHA","https://mobile-aloha.github.io"]]},
+    {n:"Step 8", h:"持续追踪前沿", p:"固定每周刷论文+资讯+榜单，参会看发布。", go:[["巡检清单","#check"],["PwC 榜单","https://paperswithcode.com/area/robots"]]},
+  ];
+  const cards = steps.map(s=>{
+    const go = s.go.map(g=> g[1].startsWith('#')
+      ? `<a onclick="show('${g[1].slice(1)}')">${g[0]} →</a>`
+      : `<a href="${g[1]}" target="_blank" rel="noopener">${g[0]} ↗</a>`).join('');
+    return `<div class="step"><span class="n">${s.n}</span><h4>${s.h}</h4><p>${s.p}</p><div class="go">${go}</div></div>`;
+  }).join('');
+  return `<div class="hint"><h3>📚 系统学习路线</h3>按下面 8 步循序渐进；每步点卡片里的入口直达资源。基础够的可直接从 Step 4 开始。</div><div class="path">${cards}</div>`;
+}
+
+function renderSpecialCheck(){
+  return `<div class="hint"><h3>✅ 日常巡检清单（省时版）</h3><ol>
+    <li><b>动态</b>：机器之心 + 量子位（每天看融资/新品/论文速递）</li>
+    <li><b>报告</b>：信通院 + 慧博/发现报告（搜“具身智能”“人形机器人”）</li>
+    <li><b>论文</b>：Hugging Face Papers + arXiv cs.RO（每周翻一次）</li>
+    <li><b>代码</b>：LeRobot / OpenVLA Releases + PwC 榜单（看新模型）</li>
+    <li><b>政策</b>：中国政府网政策库 + 工信部（按季度看新文件）</li>
+    <li><b>公司</b>：宇树/智元/Figure/Tesla Optimus 官网 + X 追产品进展</li>
+    <li><b>参会</b>：ICRA/IROS/CoRL 投稿季 + WRC/WAIC 现场发布</li>
+  </ol></div>`;
+}
+
+function show(sid){
+  const node = subIndex[sid];
+  if(!node) return;
+  activeSub = sid;
+  const {grp, sub} = node;
+  // 展开所属大组
+  menuBox.querySelectorAll('.grp').forEach(el=>{
+    if(el.dataset.gid===grp.id) el.classList.add('open');
+  });
+  let body;
+  if(sub.special==="path") body = renderSpecialPath();
+  else if(sub.special==="check") body = renderSpecialCheck();
+  else {
+    const lead = sub.lead? `<div class="lead">${sub.lead}</div>`:'';
+    const cnt = `<span class="cnt">${sub.items.length} 个</span>`;
+    body = `<div class="sec-head"><h2>${sub.title}</h2>${cnt}<span class="tip">点击卡片标题或标签跳转</span></div>${lead}<div class="grid">${sub.items.map(cardHTML).join('')}</div>`;
+  }
+  content.innerHTML =
+    `<div class="crumb">${grp.icon} ${grp.title} &nbsp;/&nbsp; <b>${sub.title}</b></div>`
+    + body
+    + `<div class="foot">本页为本地静态导航，链接指向各机构官网/栏目；具体报告常需站内检索或注册下载。共 ${GROUPS.length} 大类 / ${Object.keys(subIndex).length} 子类。</div>`;
+  content.scrollTop = 0;
+  menuBox.querySelectorAll('.subs a').forEach(a=>a.classList.toggle('active', a.dataset.sid===sid));
+}
+
+/* 跨全部子类搜索 */
+function filter(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  if(!q){ show(activeSub); return; }
+  let html = '';
+  GROUPS.forEach(g=>g.subs.forEach(s=>{
+    if(!s.items) return;
+    const matched = s.items.filter(it=>
+      (it.name+' '+it.desc+' '+it.links.map(l=>l[1]).join(' ')).toLowerCase().includes(q));
+    if(!matched.length) return;
+    html += `<div class="sec-head"><h2>${g.icon} ${s.title}</h2><span class="cnt">${matched.length} 命中</span></div><div class="grid" style="margin-bottom:20px">${matched.map(cardHTML).join('')}</div>`;
+  }));
+  content.innerHTML = `<div class="crumb">🔍 搜索：<b>${q}</b></div>` + (html || `<div class="hint">没有匹配“${q}”的信息源，换个关键词试试。</div>`);
+  content.scrollTop = 0;
+  menuBox.querySelectorAll('.subs a').forEach(a=>a.classList.remove('active'));
+}
+
+show(activeSub);
+</script>
+</body>
+</html>
