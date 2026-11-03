@@ -170,11 +170,6 @@
 /* 两级结构：GROUPS[] -> subs[] -> items[]
    item: {star, name, desc, links:[[label,url], ...]} */
 const GROUPS = [
-  {id:"plan", icon:"📅", title:"每日学习 / 练习日志", subs:[
-    {id:"daily", title:"每日学习清单（1h/天 · 4周）", lead:"每天 1 小时可完成：工作日偏读/看/想，周末动手跑代码。点格子可打卡，进度存在本地。", special:"daily"},
-    {id:"journal", title:"练习日志", lead:"记录每天实际学了什么、卡在哪、产出是什么。内容自动存在本地浏览器。", special:"journal"},
-  ]},
-
   {id:"report", icon:"📊", title:"报告与研究", subs:[
     {id:"rpt-org", title:"权威机构 / 标准院所", lead:"白皮书、产业报告、测评标准的一手来源。", items:[
       {star:1,name:"中国信通院 CAICT",desc:"白皮书与专题报告最密集，本合集训练场报告即来自此。",links:[["官网","http://www.caict.ac.cn"],["权威发布","http://www.caict.ac.cn/kxyj/qwfb/"]]},
@@ -452,6 +447,11 @@ const GROUPS = [
     {id:"path", title:"学习路线（在职·实操）", lead:"从 Agent 大脑切入、边做边学、基础按需补的 7 步路线。", special:"path"},
     {id:"check", title:"日常巡检清单", lead:"省时版：每天/每周固定看这几个就够。", special:"check"},
   ]},
+
+  {id:"plan", icon:"📅", title:"每日学习 / 练习日志", subs:[
+    {id:"daily", title:"每日学习清单（1h/天 · 4周）", lead:"每天 1 小时可完成：工作日偏读/看/想，周末动手跑代码。点格子可打卡，进度存在本地。", special:"daily"},
+    {id:"journal", title:"练习日志", lead:"记录每天实际学了什么、卡在哪、产出是什么。内容自动存在本地浏览器。", special:"journal"},
+  ]},
 ];
 
 /* ---- 运行时 ---- */
@@ -468,12 +468,12 @@ if(overlay) overlay.onclick = closeDrawer;
 const subIndex = {}; // subId -> {grp, sub}
 GROUPS.forEach(g=>g.subs.forEach(s=>subIndex[s.id]={grp:g, sub:s}));
 
-let activeSub = GROUPS[0].subs[0].id;
+let activeSub = "daily";
 
 /* 构建两级菜单 */
 GROUPS.forEach((g,gi)=>{
   const grp = document.createElement('div');
-  grp.className = 'grp' + (gi===0?' open':'');
+  grp.className = 'grp' + (subIndex[activeSub] && subIndex[activeSub].grp.id===g.id ? ' open':'');
   grp.dataset.gid = g.id;
   const total = g.subs.reduce((n,s)=>n+(s.items?s.items.length:0),0);
   grp.innerHTML = `<div class="ghead"><span>${g.icon} ${g.title}</span><span class="arw">▶</span></div>
