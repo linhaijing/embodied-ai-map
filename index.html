@@ -134,7 +134,7 @@
    item: {star, name, desc, links:[[label,url], ...]} */
 const GROUPS = [
   {id:"start", icon:"🧭", title:"开始这里", subs:[
-    {id:"path", title:"学习路线图", lead:"从零到能复现 VLA 的推荐顺序，每步配直达入口。", special:"path"},
+    {id:"path", title:"学习路线（在职·实操）", lead:"从 Agent 大脑切入、边做边学、基础按需补的 7 步路线。", special:"path"},
     {id:"check", title:"日常巡检清单", lead:"省时版：每天/每周固定看这几个就够。", special:"check"},
   ]},
 
@@ -458,14 +458,13 @@ function cardHTML(it){
 
 function renderSpecialPath(){
   const steps = [
-    {n:"Step 1", h:"打基础：数学 + 深度学习", p:"线代/概率/最优化 + 深度学习框架，先会用 PyTorch。", go:[["动手学 D2L","https://zh.d2l.ai"],["花书","https://www.deeplearningbook.org"]]},
-    {n:"Step 2", h:"机器人学 + 控制", p:"运动学/动力学/规划/控制，建立“机器人怎么动”的直觉。", go:[["Modern Robotics","https://modernrobotics.northwestern.edu"],["CS223A","https://cs223a.stanford.edu"]]},
-    {n:"Step 3", h:"强化学习 + 模仿学习", p:"策略学习的两条主线，具身控制的核心方法。", go:[["CS285","https://rail.eecs.berkeley.edu/deeprlcourse/"],["RL圣经","http://incompleteideas.net/book/the-book-2nd.html"]]},
-    {n:"Step 4", h:"读综述建立全局观", p:"先读 2–3 篇具身/VLA 综述，再追 arXiv 新论文。", go:[["arXiv cs.RO","https://arxiv.org/list/cs.RO/recent"],["HF Papers","https://huggingface.co/papers"]]},
-    {n:"Step 5", h:"动手跑仿真", p:"用 Isaac Lab / Genesis / ManiSkill 跑通一个操作任务。", go:[["Isaac Lab","https://github.com/isaac-sim/IsaacLab"],["Genesis","https://github.com/Genesis-Embodied-AI/Genesis"]]},
-    {n:"Step 6", h:"复现 VLA 模型", p:"从 LeRobot / OpenVLA 入手，跑通训练与推理。", go:[["LeRobot","https://github.com/huggingface/lerobot"],["OpenVLA","https://github.com/openvla/openvla"]]},
-    {n:"Step 7", h:"用真数据 / 真机", p:"接入 Open X-Embodiment / DROID 数据，或低成本实机。", go:[["Open X-Emb","https://robotics-transformer-x.github.io"],["Mobile ALOHA","https://mobile-aloha.github.io"]]},
-    {n:"Step 8", h:"持续追踪前沿", p:"固定每周刷论文+资讯+榜单，参会看发布。", go:[["巡检清单","#check"],["PwC 榜单","https://paperswithcode.com/area/robots"]]},
+    {n:"Step 1", h:"看懂“大脑指挥身体”长什么样", p:"周末半天，先看 VoxPoser / Code as Policies 的 demo——免训练，靠 LLM+现成感知就能驱动机器人。目标：亲眼看到 LLM 让机器人动起来。", go:[["VoxPoser","https://voxposer.github.io"],["Code as Policies","https://code-as-policies.github.io"]]},
+    {n:"Step 2", h:"用 2 篇论文吃透范式", p:"只读方法图和思路、不抠公式：SayCan=规划+可供性，ReAct=推理+行动交替。建立“大脑怎么决策”的心智模型。", go:[["SayCan","https://say-can.github.io"],["ReAct","https://react-lm.github.io"]]},
+    {n:"Step 3", h:"装个仿真，把“大脑”换成你写的 LLM", p:"用 ManiSkill / Genesis 跑官方例子，把决策部分替换成你的 LLM 调用，先做抓取/摆放这类简单任务，跑通闭环。", go:[["ManiSkill","https://maniskill.ai"],["Genesis","https://github.com/Genesis-Embodied-AI/Genesis"]]},
+    {n:"Step 4", h:"接 VLA 当“执行器/小脑”", p:"用 LeRobot / OpenVLA 跑一个预训练策略：LLM 负责“做什么”，VLA 负责“怎么动”。这才是真正的“大脑→动作”。", go:[["LeRobot","https://github.com/huggingface/lerobot"],["OpenVLA","https://github.com/openvla/openvla"]]},
+    {n:"Step 5", h:"卡哪补哪（基础随取随用）", p:"遇到坐标系/位姿不懂→翻机器人学那一章；策略学不动→补一点模仿/强化学习。小块、按需，别一次啃完。", go:[["机器人学 CS223A","https://cs223a.stanford.edu"],["RL 速查","http://incompleteideas.net/book/the-book-2nd.html"]]},
+    {n:"Step 6", h:"每周扫前沿保持手感", p:"固定刷 HF Papers + arXiv cs.RO 里 agent/planning 相关；关注 Awesome-LLM-Robotics 的更新。", go:[["HF Papers","https://huggingface.co/papers"],["arXiv cs.RO","https://arxiv.org/list/cs.RO/recent"]]},
+    {n:"Step 7", h:"做个小项目收口", p:"选一个和你工作/生活相关的任务，用“LLM 大脑 + 仿真或 VLA”端到端做出来——能跑通就是最好的简历与正反馈。", go:[["Agent/大脑子类","#tech-agent"],["巡检清单","#check"]]},
   ];
   const cards = steps.map(s=>{
     const go = s.go.map(g=> g[1].startsWith('#')
@@ -473,7 +472,10 @@ function renderSpecialPath(){
       : `<a href="${g[1]}" target="_blank" rel="noopener">${g[0]} ↗</a>`).join('');
     return `<div class="step"><span class="n">${s.n}</span><h4>${s.h}</h4><p>${s.p}</p><div class="go">${go}</div></div>`;
   }).join('');
-  return `<div class="hint"><h3>📚 系统学习路线</h3>按下面 8 步循序渐进；每步点卡片里的入口直达资源。基础够的可直接从 Step 4 开始。</div><div class="path">${cards}</div>`;
+  return `<div class="hint"><h3>⚡ 在职实操路线（从 Agent 大脑切入）</h3>
+    为在职、时间碎片化的你设计：<b>从你熟悉的 LLM/Agent 入手，边做边学，基础按需补</b>，而不是先啃半年数学。
+    主线是 <b>大脑 → 执行 → 卡哪补哪</b>；每步点卡片入口直达资源，周末能推进一步即可。</div>
+    <div class="path">${cards}</div>`;
 }
 
 function renderSpecialCheck(){
